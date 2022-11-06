@@ -11,4 +11,15 @@ entries:
     urls:
     - https://github.com/TLii/charts/releases/download/deconz-0.1.0/deconz-0.1.0.tgz
     version: 0.1.0
-generated: "2022-11-06T13:07:53.370690069Z"
+  openhab:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2022-11-06T13:09:43.643369021Z"
+    description: A Helm chart for Kubernetes
+    digest: eee3ca629fc50858d4dab84c98590c8bfdb406b95e3414d2de0673b8b88887ed
+    name: openhab
+    type: application
+    urls:
+    - https://github.com/TLii/charts/releases/download/openhab-0.1.0/openhab-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-11-06T13:09:43.643380522Z"
