@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  deconz:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2022-11-06T13:07:53.370684269Z"
+    description: A Helm chart for Kubernetes
+    digest: acbc510b30c0dc8ddecee34d815557d404e1f6d966ce6438d2e06bfc371d24d4
+    name: deconz
+    type: application
+    urls:
+    - https://github.com/TLii/charts/releases/download/deconz-0.1.0/deconz-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-11-06T13:07:53.370690069Z"
