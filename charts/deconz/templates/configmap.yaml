@@ -55,6 +55,6 @@ data:
     {{- else }}
     DECONZ_UPNP: 0 
     {{- end }}
-    DECONZ_UID=1000 # Set the user id of deCONZ volume
-    DECONZ_GID=1000 # Set the group id of deCONZ volume
-    DECONZ_START_VERBOSE=0 # Set this option to 0 to disable verbose of start script, set to 1 to enable set -x logging
+    DECONZ_UID: 1000 # Set the user id of deCONZ volume
+    DECONZ_GID: 1000 # Set the group id of deCONZ volume
+    DECONZ_START_VERBOSE: 0 # Set this option to 0 to disable verbose of start script, set to 1 to enable set -x logging
