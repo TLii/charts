@@ -40,9 +40,16 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - name: http
-              containerPort: 80
+            - name: webPort
+              containerPort: {{ .Values.deconz.webPort }}
               protocol: TCP
+            - name: wsPort
+              containerPort: {{ .Values.deconz.wsPort }}
+              protocol: TCP
+            {{- if .Values.deconz.vnc.enabled }}
+            - name: vncPort
+              containerPort: {{ .Values.deconz.vnc.port }}
+            {{- end }}
           livenessProbe:
             httpGet:
               path: /
