@@ -11,17 +11,17 @@ spec:
       targetPort: {{ .Values.deconz.wsPort }}
       protocol: TCP
       name: wsPort
-    {{- if .Values.deconz.vnc.enabled  -}}
+    {{- if .Values.deconz.vnc.enabled  }}
     - port: {{ .Values.deconz.vnc.port }}
       targetPort: {{ .Values.deconz.vnc.port }}
       protocol: TCP
       name: vncPort
-    {{- end -}}
-    {{- if .Values.deconz.novnc.enabled  -}}
+    {{- end }}
+    {{- if .Values.deconz.novnc.enabled  }}
     - port: {{ .Values.deconz.novnc.port }}
       targetPort: {{ .Values.deconz.novnc.port }}
       protocol: TCP
       name: novncPort
-    {{- end -}}
+    {{- end }}
   selector:
     {{- include "deconz.selectorLabels" . | nindent 4 }}
