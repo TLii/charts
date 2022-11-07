@@ -80,3 +80,29 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+deconz:
+  webPort: 80
+  wsPort: 8443
+  vnc:
+    enabled: true  # Set this option to enable VNC access to the container to view the deCONZ ZigBee mesh
+    port: 5900
+    password: changeme # Default password for VNC mode is 'changeme'; this option can (should) be used to change the default password
+    passwordInFile:
+      enabled: false #If true, password is revealed to the app as a file instead of an environment variable.
+      # TODO: secret template
+      passwordFile: /var/secrets/deconz_vnc_password #This only matters if passwordInFile is enabled
+    # Per default this is disabled and DECONZ_VNC_PASSWORD is used. Details on creating secrets for use with Docker containers can be found in the corresponding section from the official documentation
+  novnc:
+    enabled: true
+    port: 6080  # Default port for noVNC is 6080; this option can be used to change this port.
+  deviceName: /dev/ttyAMA0 # By default, deCONZ searches for RaspBee at /dev/ttyAMA0 and Conbee at /dev/ttyUSB0; when using other USB devices (e.g. a Z-Wave stick) deCONZ may not find RaspBee/Conbee properly. Set this environment variable to the same string passed to --device to force deCONZ to use the specific USB device.
+  timezone: Europe/Helsinki
+  enableUPnP: true # Change to false to disable uPNP, see: https://github.com/dresden-elektronik/deconz-rest-plugin/issues/274
+  debug:
+    debugInfo: true
+    APS: false
+    ZCL: false
+    ZDP: false
+    OTAU: false
+    error: false

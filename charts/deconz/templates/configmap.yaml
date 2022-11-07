@@ -5,3 +5,56 @@ metadata:
     labels:
         {{- include "deconz.labels" . | nindent 4 }}
 data:
+    DECONZ_WEB_PORT: 80
+    DECONZ_WS_PORT: 8443
+    {{- if .Values.deconz.debug.debugInfo }}
+    DEBUG_INFO: 1
+    {{- else }}
+    DEBUG_INFO: 0
+    {{- end }}
+    {{- if .Values.deconz.debug.APS }}
+    DEBUG_APS: 1 # Sets the level of the deCONZ command-line flag --dbg-aps (default 0).
+    {{- else }}
+    DEBUG_APS: 0 # Sets the level of the deCONZ command-line flag --dbg-aps (default 0).
+    {{- end }}
+    {{- if .Values.deconz.debug.ZCL }}
+    DEBUG_ZCL: 1 # Sets the level of the deCONZ command-line flag --dbg-zcl (default 0).
+    {{- else }}
+    DEBUG_ZCL: 0 # Sets the level of the deCONZ command-line flag --dbg-zcl (default 0).
+    {{- end }}
+    {{- if .Values.deconz.debug.ZDP }}
+    DEBUG_ZDP: 1 # Sets the level of the deCONZ command-line flag --dbg-zdp (default 0).
+    {{- else }}
+    DEBUG_ZDP: 0 # Sets the level of the deCONZ command-line flag --dbg-zdp (default 0).
+    {{- end }}
+    {{- if .Values.deconz.debug.OTAU }}
+    DEBUG_OTAU: 1 # Sets the level of the deCONZ command-line flag --dbg-otau (default 0).
+    {{- else }}
+    DEBUG_OTAU: 0 # Sets the level of the deCONZ command-line flag --dbg-otau (default 0).
+    {{- end }}
+    {{- if .Values.deconz.debug.error }}
+    DEBUG_ERROR: 1 # Sets the level of the deCONZ command-line flag --dbg-error (default 0).
+    {{- else }}
+    DEBUG_ERROR: 0 # Sets the level of the deCONZ command-line flag --dbg-error (default 0).
+    {{- end }}
+    DECONZ_DEVICE: {{ .Values.deconz.deviceName }} 
+    TZ: {{ .Values.deconz.timezone }} # Set the local time zone so deCONZ has the correct time.
+    {{- if .Values.deconz.vnc.enabled }}
+    DECONZ_VNC_MODE: 1   
+    DECONZ_VNC_PORT: 5900 # Default port for VNC mode is 5900; this option can be used to change this port
+    {{- else }}
+    DECONZ_VNC_MODE: 0
+    {{- end }}
+    {{- if .Values.deconz.novnc.enabled }}
+    DECONZ_NOVNC_PORT: {{ .Values.deconz.novnc.port }}
+    {{- else }}
+    DECONZ_NOVNC_PORT: 0 # Novnc is disabled when port is set to 0
+    {{- end }}
+    {{- if .Values.deconz.enableUPnP }}
+    DECONZ_UPNP: 1
+    {{- else }}
+    DECONZ_UPNP: 0 
+    {{- end }}
+    DECONZ_UID=1000 # Set the user id of deCONZ volume
+    DECONZ_GID=1000 # Set the group id of deCONZ volume
+    DECONZ_START_VERBOSE=0 # Set this option to 0 to disable verbose of start script, set to 1 to enable set -x logging
