@@ -1,0 +1,7 @@
+apiVersion: apps/v1
+kind: ConfigMap
+metadata:
+    name: {{ include "deconz.fullname" . }}-env
+    labels:
+        {{- include "deconz.labels" . | nindent 4 }}
+data:
