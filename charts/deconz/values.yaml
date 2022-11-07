@@ -102,3 +102,7 @@ deconz:
     ZDP: false
     OTAU: false
     error: false
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteMany

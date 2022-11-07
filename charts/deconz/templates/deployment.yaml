@@ -60,6 +60,9 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: datadir
+              mountPath: /opt/deCONZ
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -72,3 +75,12 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes: 
+      {{ if .Values.persistence.enabled }}
+        - name: datadir
+          persistentVolumeClaim:
+            claimName: {{ include "deconz.fullname" $ }}-data
+      {{ else }}
+        - name: datadir
+          emptyDir: {}
+      {{ end }}
