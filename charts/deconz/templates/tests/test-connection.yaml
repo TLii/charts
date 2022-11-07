@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "deconz.fullname" . }}:{{ .Values.service.port }}']
+      args: ['{{ include "deconz.fullname" . }}:{{ .Values.deconz.webPort }}']
   restartPolicy: Never
