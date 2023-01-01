@@ -21,7 +21,7 @@ jobs:
 
       - name: Update Chart versions on every push
         run: |
-          $APP=openhab
+          APP=openhab
           CHARTVER=$(sed -n  '/^version:.*/p' ./charts/$APP/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
           sed -i "s/^version:.*/$CHARTVER/" ./charts/$APP/Chart.yaml
           echo "Chart version: $CHARTVER\nApp Version: $BUILD_VERSION"
