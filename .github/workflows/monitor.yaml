@@ -17,22 +17,21 @@ jobs:
     - name: Check image upstreams for changes in master
       id: version
       run: |   
-        DECONZ_APPVERSION=$(curl -s https://raw.githubusercontent.com/deconz-community/deconz-docker/main/version.json | grep 'version' | head -n1 | awk '{print $2;}' | sed 's/[",]/\'\'/g')
-        if [[ -z ./.github/deconz_version ||  $DECONZ_APPVERSION -ne $(cat ./.github/deconz_version) ]]; then
-          echo "deconz_changed=true" >> $GITHUB_ENV; 
-          echo "version_change=true" >> $GITHUB_ENV; 
-          echo $DECONZ_APPVERSION >> ./.github/deconz_version; 
+        DECONZ_APPVERSION=$(curl -s https://raw.githubusercontent.com/deconz-community/deconz-docker/main/version.json | grep 'version' | head -n1 | awk '{print $2;}' | sed 's/[",]/'\'''\''/g')
+        if [[ -z $(cat ./.github/deconz_version) ||  $DECONZ_APPVERSION -ne $(cat ./.github/deconz_version) ]]; then
+            echo "deconz_changed=true" >> "$GITHUB_ENV"
+            echo "version_change=true" >> "$GITHUB_ENV"
+            echo "$DECONZ_APPVERSION" >> ./.github/deconz_version;
         else 
-          echo "deconz_changed=false" >> $GITHUB_ENV;
+            echo "deconz_changed=false" >> "$GITHUB_ENV";
         fi
         OPENHAB_HEAD=$(git ls-remote https://github.com/openhab/openhab-docker refs/heads/main | head -n1 |awk '{print $1;}')
-        if [[ -z ./.github/openhab_version ]] || $OPENHAB_HEAD -ne $(cat ./.github/openhab_head); then
-          echo "openhab_changed=true" >> $GITHUB_ENV;
-          echo "version_change=true" >> $GITHUB_ENV;
-          echo $OPENHAB_HEAD >> ./.github/openhab_head;
+        if [[ -z $(./.github/openhab_version) ]] || $OPENHAB_HEAD -ne "$(cat ./.github/openhab_head)"; then
+            echo "openhab_changed=true" >> "$GITHUB_ENV";
+            echo "version_change=true" >> "$GITHUB_ENV";
+            echo "$OPENHAB_HEAD" >> ./.github/openhab_head;
         else
-          echo "openhab_changed=false" >> $GITHUB_ENV;
-        fi
+            echo "openhab_changed=false" >> "$GITHUB_ENV";
     
     - name: Update deCONZ appVersion
       if: ${{ github.deconz_changed == 'true'}}
