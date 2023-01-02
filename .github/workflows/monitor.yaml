@@ -65,13 +65,9 @@ jobs:
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
         git commit -m "Updating appVersion(s)" -a
-        if [ -z "$(git status --porcelain)" ]; then
-          echo "Not committing"
-          echo "push=false" >> $GITHUB_ENV
-        else
-          echo "Committing upstream changes"
-          echo "push=true" >> $GITHUB_ENV
-        fi
+        echo "Committing upstream changes"
+        echo "push=true" >> $GITHUB_ENV
+
       shell: bash
     
     - name: Push changes
