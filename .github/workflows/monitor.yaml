@@ -25,8 +25,8 @@ jobs:
         echo deCONZ version is $DECONZ_APPVERSION.
         if [[ -z $(cat ./.github/deconz_version) ||  $DECONZ_APPVERSION != $(cat ./.github/deconz_version) ]]; then
             echo "DeCONZ has changed, previous version was $(cat ./.github/deconz_version)"
-            echo "deconz_changed=true" >> $GITHUB_ENV
-            echo "version_change=true" >> $GITHUB_ENV
+            echo "deconz_changed='true'" >> $GITHUB_ENV
+            echo "version_change='true'" >> $GITHUB_ENV
             echo "$DECONZ_APPVERSION" > ./.github/deconz_version;
         else 
             echo "deconz_changed=false" >> $GITHUB_ENV;
@@ -35,8 +35,8 @@ jobs:
         echo OpenHAB head commit is $OPENHAB_HEAD.
         if [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
             echo "OpenHAB has changed, previous one was $(cat ./.github/openhab_head)"
-            echo "openhab_changed=true" >> $GITHUB_ENV
-            echo "version_change=true" >> $GITHUB_ENV
+            echo "openhab_changed='true'" >> $GITHUB_ENV
+            echo "version_change='true'" >> $GITHUB_ENV
             echo "$OPENHAB_HEAD" > ./.github/openhab_head;
         else
             echo "openhab_changed=false" >> $GITHUB_ENV;
