@@ -41,6 +41,7 @@ jobs:
         else
             echo "openhab_changed=false" >> $GITHUB_ENV;
         fi
+        echo  "DeCONZ changed: ${{ env.deconz_changed }}\nOpenHAB changed: ${{ env.openhab_changed }}\nVersion change: ${{ env.version_change }} "
     
     - name: Update deCONZ appVersion
       if: ${{ env.deconz_changed == 'true'}}
