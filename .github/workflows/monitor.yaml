@@ -25,23 +25,28 @@ jobs:
         echo deCONZ version is $DECONZ_APPVERSION.
         if [[ -z $(cat ./.github/deconz_version) ||  $DECONZ_APPVERSION != $(cat ./.github/deconz_version) ]]; then
             echo "DeCONZ has changed, previous version was $(cat ./.github/deconz_version)"
-            echo "deconz_changed='true'" >> $GITHUB_ENV
-            echo "version_change='true'" >> $GITHUB_ENV
+            echo "deconz_changed=true" >> $GITHUB_ENV
+            echo "version_change=true" >> $GITHUB_ENV
             echo "$DECONZ_APPVERSION" > ./.github/deconz_version;
         else 
             echo "deconz_changed=false" >> $GITHUB_ENV;
+            echo "DeCONZ has not changed, still at $(cat ./.github/deconz_version)"
         fi
         OPENHAB_HEAD=$(git ls-remote https://github.com/openhab/openhab-docker refs/heads/main | head -n1 |awk '{print $1;}')
         echo OpenHAB head commit is $OPENHAB_HEAD.
         if [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
             echo "OpenHAB has changed, previous one was $(cat ./.github/openhab_head)"
-            echo "openhab_changed='true'" >> $GITHUB_ENV
-            echo "version_change='true'" >> $GITHUB_ENV
+            echo "openhab_changed=true" >> $GITHUB_ENV
+            echo "version_change=true" >> $GITHUB_ENV
             echo "$OPENHAB_HEAD" > ./.github/openhab_head;
         else
             echo "openhab_changed=false" >> $GITHUB_ENV;
+            echo "OpenHAB has not changed, still at $(cat ./.github/openhab_head)"
+
         fi
-        echo  "DeCONZ changed: ${{ env.deconz_changed }}\nOpenHAB changed: ${{ env.openhab_changed }}\nVersion change: ${{ env.version_change }} "
+        echo  "DeCONZ changed: ${{ env.deconz_changed }}";
+        echo "OpenHAB changed: ${{ env.openhab_changed }}";
+        echo "Version change: ${{ env.version_change }}";
     
     - name: Update deCONZ appVersion
       if: ${{ env.deconz_changed == 'true'}}
