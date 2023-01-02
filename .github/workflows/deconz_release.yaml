@@ -1,12 +1,6 @@
 name: Validate and release deCONZ
 
 on:
-  push:
-    paths:
-      - charts/deconz
-    branches:
-    - master
-    - develop
   workflow_dispatch:
 
 jobs:

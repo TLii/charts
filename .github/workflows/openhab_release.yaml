@@ -1,12 +1,6 @@
 name: Validate and release OpenHAB
 
 on:
-  push:
-    paths:
-      - charts/openhab
-    branches:
-    - master
-    - develop
   workflow_dispatch:
 
 jobs:
