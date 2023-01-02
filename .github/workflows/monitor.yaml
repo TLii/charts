@@ -8,19 +8,19 @@ on:
   schedule:
     - cron: '15 * * * *'
   workflow_dispatch:
-    
-    
+
+
 jobs:
   build:
     runs-on: ubuntu-latest
-  
+
     steps:
-    - name: Check out code
+    - name: Check out
       uses: actions/checkout@v3
 
     - name: Check image upstreams for changes in master
       id: version
-      run: |   
+      run: |
         DECONZ_APPVERSION=$(curl -s https://raw.githubusercontent.com/deconz-community/deconz-docker/main/version.json | grep 'version' | head -n1 | awk '{print $2;}' | sed 's/[",]//g')
         echo deCONZ version is $DECONZ_APPVERSION.
         if [[ -z $(cat ./.github/deconz_version) ||  $DECONZ_APPVERSION != $(cat ./.github/deconz_version) ]]; then
@@ -28,7 +28,7 @@ jobs:
             echo "deconz_changed=true" >> $GITHUB_ENV
             echo "version_change=true" >> $GITHUB_ENV
             echo "$DECONZ_APPVERSION" > ./.github/deconz_version;
-        else 
+        else
             echo "deconz_changed=false" >> $GITHUB_ENV;
             echo "DeCONZ has not changed, still at $(cat ./.github/deconz_version)"
         fi
@@ -47,12 +47,12 @@ jobs:
         echo  "DeCONZ changed: ${{ env.deconz_changed }}";
         echo "OpenHAB changed: ${{ env.openhab_changed }}";
         echo "Version change: ${{ env.version_change }}";
-    
+
     - name: Update deCONZ appVersion
       if: ${{ env.deconz_changed == 'true'}}
       run: |
         sed -i "s/^appVersion:.*/appVersion: $DECONZ_APPVERSION/" ./charts/deconz/Chart.yaml
-    
+
     - name: Update OpenHAB appVersion
       if: ${{ env.openhab_changed == 'true'}}
       run: |
@@ -69,31 +69,20 @@ jobs:
         echo "push=true" >> $GITHUB_ENV
 
       shell: bash
-    
+
     - name: Push changes
       if: ${{ env.push == 'true' }}
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Run DeCONZ chart-releaser
-      if: ${{ env.deconz_changed == 'true' }}
+    - name: Run chart-releaser
+      if: ${{ env.version_change == 'true' }}
       run: |
         curl \
         -X POST \
         -H "Accept: application/vnd.github+json" \
         -H "Authorization: Bearer ${{ secrets.RELEASE_DISPATCH_TOKEN }}"\
         -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/TLii/charts/actions/workflows/deconz_release.yaml/dispatches \
-        -d '{"ref":"$GITHUB_BASE_REF"}}'
-
-    - name: Run OpenHAB chart-releaser
-      if: ${{ env.openhab_changed == 'true' }}
-      run: |
-        curl \
-        -X POST \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${{ secrets.RELEASE_DISPATCH_TOKEN }}"\
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/TLii/charts/actions/workflows/openhab_release.yaml/dispatches \
+        https://api.github.com/repos/TLii/charts/actions/workflows/chart_release.yaml/dispatches \
         -d '{"ref":"$GITHUB_BASE_REF"}}'

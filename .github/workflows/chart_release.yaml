@@ -1,4 +1,4 @@
-name: Validate and release deCONZ
+name: Validate and release charts
 
 on:
   workflow_dispatch:
