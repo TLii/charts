@@ -43,18 +43,18 @@ jobs:
         fi
     
     - name: Update deCONZ appVersion
-      if: ${{ github.deconz_changed == 'true'}}
+      if: ${{ env.deconz_changed == 'true'}}
       run: |
         sed -i "s/^appVersion:.*/appVersion: $DECONZ_APPVERSION/" ./charts/deconz/Chart.yaml
     
     - name: Update OpenHAB appVersion
-      if: ${{ github.openhab_changed == 'true'}}
+      if: ${{ env.openhab_changed == 'true'}}
       run: |
         sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
 
     - name: Commit changes
       id: commit
-      if: ${{ github.version_change == 'true' }}
+      if: ${{ env.version_change == 'true' }}
       run: |
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
@@ -69,13 +69,13 @@ jobs:
       shell: bash
     
     - name: Push changes
-      if: ${{ github.push == 'true' }}
+      if: ${{ env.push == 'true' }}
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run DeCONZ chart-releaser
-      if: ${{ github.deconz_changed == 'true' }}
+      if: ${{ env.deconz_changed == 'true' }}
       env: 
         PAT: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
       run: |
@@ -88,7 +88,7 @@ jobs:
         -d '{"ref":"$GITHUB_BASE_REF"}}'
 
     - name: Run OpenHAB chart-releaser
-      if: ${{ github.openhab_changed == 'true' }}
+      if: ${{ env.openhab_changed == 'true' }}
       env: 
         PAT: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
       run: |
