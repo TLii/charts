@@ -1,4 +1,4 @@
-name: Monitor image for version changes for upstream
+name: Continuous integration and publication
 
 on:
   push:
@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - name: Check out
-      uses: actions/checkout@v3
+      uses: actions/checkout@
+      with:
+        fetch-depth: "0"
 
     - name: Check image upstreams for changes in master
       id: version
@@ -76,13 +78,76 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Run chart-releaser
-      if: ${{ env.version_change == 'true' }}
+    - name: Evaluate if chart should be released
       run: |
-        curl \
-        -X POST \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer ${{ secrets.RELEASE_DISPATCH_TOKEN }}"\
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        https://api.github.com/repos/TLii/charts/actions/workflows/chart_release.yaml/dispatches \
-        -d '{"ref":"$GITHUB_BASE_REF"}}'
+        if [[ ${{ env.version_change }} == 'true' || $GITHUB_EVENT_NAME == "push" ]]; do
+          echo "chart_needed=true" >> $GITHUB_ENV
+        done
+
+    - name: Set up Helm
+      if: ${{ env.chart_needed == 'true' }}
+      uses: azure/setup-helm@v3
+      with:
+        version: v3.9.2
+
+    - name: Update Chart version of modified charts
+      if: ${{ env.chart_needed == 'true' }}
+      run: |
+
+        for app in ./charts/*; do
+        for file in $(git diff --name-only HEAD^ HEAD); do
+          if [[ $file != $app/* ]]; then
+            CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+            sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+          else
+
+            fi
+
+        done
+
+
+        done
+
+    - uses: actions/setup-python@v2
+      if: ${{ env.chart_needed == 'true' }}
+      with:
+        python-version: 3.7
+
+    - name: Set up chart-testing
+      if: ${{ env.chart_needed == 'true' }}
+      uses: helm/chart-testing-action@v2.2.1
+
+    - name: Run chart-testing (list-changed)
+      if: ${{ env.chart_needed == 'true' }}
+      id: list-changed
+      run: |
+        changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+        if [[ -n "$changed" ]]; then
+          echo "::set-output name=changed::true"
+        fi
+
+    - name: Run chart-testing (lint)
+      if: ${{ env.chart_needed == 'true' }}
+      run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+
+    - name: Create kind cluster
+      uses: helm/kind-action@v1.2.0
+      if: |
+        steps.list-changed.outputs.changed == 'true' &&
+        ${{ env.chart_needed == 'true' }}
+
+    - name: Run chart-testing (install)
+      if: ${{ env.chart_needed == 'true' }}
+      run: ct install
+
+    - name: Checkout
+      if: ${{ env.chart_needed == 'true' }}
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Run chart-releaser
+      if: ${{ env.chart_needed == 'true' }}
+      uses: helm/chart-releaser-action@v1.4.1
+      env:
+        CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
