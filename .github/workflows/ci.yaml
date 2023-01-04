@@ -81,7 +81,7 @@ jobs:
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
-        github.event_name == "push"
+        github.event_name == 'push'
       run: |
         echo "chart_needed=true" >> $GITHUB_ENV
 
