@@ -51,18 +51,18 @@ jobs:
         echo "Version change: ${{ env.version_change }}";
 
     - name: Update deCONZ appVersion
-      if: ${{ env.deconz_changed == 'true'}}
+      if: env.deconz_changed == 'true'
       run: |
         sed -i "s/^appVersion:.*/appVersion: $DECONZ_APPVERSION/" ./charts/deconz/Chart.yaml
 
     - name: Update OpenHAB appVersion
-      if: ${{ env.openhab_changed == 'true'}}
+      if: env.openhab_changed == 'true'
       run: |
         sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
 
     - name: Commit changes
       id: commit
-      if: ${{ env.version_change == 'true' }}
+      if: env.version_change == 'true'
       run: |
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
@@ -73,7 +73,7 @@ jobs:
       shell: bash
 
     - name: Push changes
-      if: ${{ env.push == 'true' }}
+      if: env.push == 'true'
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -86,14 +86,14 @@ jobs:
         echo "chart_needed=true" >> $GITHUB_ENV
 
     - name: Set up Helm
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
 
       uses: azure/setup-helm@v3
       with:
         version: v3.9.2
 
     - name: Update Chart version of modified charts
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       run: |
 
         for app in ./charts/*; do
@@ -103,7 +103,7 @@ jobs:
             sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
           else
 
-            fi
+          fi
 
         done
 
@@ -111,45 +111,43 @@ jobs:
         done
 
     - uses: actions/setup-python@v2
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       with:
         python-version: 3.7
 
     - name: Set up chart-testing
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       uses: helm/chart-testing-action@v2.2.1
 
     - name: Run chart-testing (list-changed)
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       id: list-changed
       run: |
         changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
         if [[ -n "$changed" ]]; then
-          echo "::set-output name=changed::true"
+          echo "list_changed=true" >> $GITHUB_ENV
         fi
 
     - name: Run chart-testing (lint)
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       run: ct lint --target-branch ${{ github.event.repository.default_branch }}
 
     - name: Create kind cluster
       uses: helm/kind-action@v1.2.0
-      if: |
-        steps.list-changed.outputs.changed == 'true' &&
-        ${{ env.chart_needed == 'true' }}
+      if: env.list-changed == 'true'
 
     - name: Run chart-testing (install)
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       run: ct install
 
     - name: Checkout
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       uses: actions/checkout@v2
       with:
         fetch-depth: 0
 
     - name: Run chart-releaser
-      if: ${{ env.chart_needed == 'true' }}
+      if: env.chart_needed == 'true'
       uses: helm/chart-releaser-action@v1.4.1
       env:
         CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
