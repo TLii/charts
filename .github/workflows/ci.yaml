@@ -97,17 +97,13 @@ jobs:
       run: |
 
         for app in ./charts/*; do
-        for file in $(git diff --name-only HEAD^ HEAD); do
-          if [[ $file != $app/* ]]; then
-            CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-            sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
-          else
-
-          fi
-
-        done
-
-
+          for file in $(git diff --name-only HEAD^ HEAD); do
+            if [[ $file == $app/* ]]; then
+              CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+              sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+              break
+            fi
+          done
         done
 
     - uses: actions/setup-python@v2
