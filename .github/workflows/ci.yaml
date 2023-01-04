@@ -60,24 +60,6 @@ jobs:
       run: |
         sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
 
-    - name: Commit changes
-      id: commit
-      if: env.version_change == 'true'
-      run: |
-        git config --local user.email "github-actions@github.com"
-        git config --local user.name "github-actions"
-        git commit -m "Updating appVersion(s)" -a
-        echo "Committing upstream changes"
-        echo "push=true" >> $GITHUB_ENV
-
-      shell: bash
-
-    - name: Push changes
-      if: env.push == 'true'
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
@@ -105,6 +87,24 @@ jobs:
             fi
           done
         done
+
+    - name: Commit changes
+      id: commit
+      if: env.version_change == 'true'
+      run: |
+        git config --local user.email "github-actions@github.com"
+        git config --local user.name "github-actions"
+        git commit -m "Updating appVersion(s)" -a
+        echo "Committing upstream changes"
+        echo "push=true" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Push changes
+      if: env.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - uses: actions/setup-python@v2
       if: env.chart_needed == 'true'
