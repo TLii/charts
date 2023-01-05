@@ -77,20 +77,31 @@ jobs:
     - name: Update Chart version of modified charts
       if: env.chart_needed == 'true'
       run: |
+
+        ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
         for app in ./charts/*; do
-          for file in $(git diff --name-only HEAD^ HEAD); do
+        if [[ $no_commit == "true" ]]; then
+          echo "No commit history; updating chart version in $app/Chart.yaml."
+          CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+          break
+        else
+          for file in $(git diff --name-only $lastcommit HEAD); do
             if [[ $file == $app/* ]]; then
+              echo  "Updating chart version for $app in $app/Chart.yaml"
               CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
               sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
               break
             fi
           done
+        fi
         done
 
-    - name: Commit changes
+    - name: Add latest commit SHA and commit changes
       id: commit
       if: env.version_change == 'true'
       run: |
+        echo "$GITHUB_SHA" > .github/latest_running_sha
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
         git commit -m "Updating appVersion(s)" -a
@@ -98,12 +109,6 @@ jobs:
         echo "push=true" >> $GITHUB_ENV
 
       shell: bash
-
-    - name: Push changes
-      if: env.push == 'true'
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - uses: actions/setup-python@v2
       if: env.chart_needed == 'true'
@@ -134,6 +139,12 @@ jobs:
     - name: Run chart-testing (install)
       if: env.chart_needed == 'true'
       run: ct install
+
+    - name: Push changes once tests have succeeded
+      if: env.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout
       if: env.chart_needed == 'true'
