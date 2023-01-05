@@ -77,7 +77,6 @@ jobs:
     - name: Update Chart version of modified charts
       if: env.chart_needed == 'true'
       run: |
-
         for app in ./charts/*; do
           for file in $(git diff --name-only HEAD^ HEAD); do
             if [[ $file == $app/* ]]; then
