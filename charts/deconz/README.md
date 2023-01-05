@@ -6,6 +6,6 @@
 
 I'm providing this image in hopes it will be useful to others, but changes are driven by my own needs. Feel free to file an issue or pull request though - the more people can benefit from this, the better.
 ## Notes
-This chart will serve DeConz app on port 80. If you wish to use certificates, configure Ingress for that. The `values.yaml` directives *should* work.
-Other connections, like websocket and different VNC systems, work through NodePorts. Check your cluster for correct values.
-The environment variables used for configuring the app can be set in the `values.yaml` file.
+- This chart will serve DeConz app on port 80. If you wish to use certificates, configure Ingress for that. The `values.yaml` directives *should* work. Other connections, like websocket and different VNC systems, work through NodePorts. Check your cluster for correct values.
+- The environment variables used for configuring the app can be set in the `values.yaml` file.
+- You probably want to add some sort of node selection to make sure deconz is run on a node that has a hardware Zigbee bridge connected, unless you have e.g. ConBees on all nodes. Remember that you can't really share usb devices *between* nodes.
