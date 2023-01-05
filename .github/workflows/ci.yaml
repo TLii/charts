@@ -60,6 +60,30 @@ jobs:
       run: |
         sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
 
+    - name: Update Chart version of modified charts
+      run: |
+
+        ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
+        for app in ./charts/*; do
+        if [[ $no_commit == "true" ]]; then
+          echo "No commit history; updating chart version in $app/Chart.yaml."
+          CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+          echo "version_change=true" >> $GITHUB_ENV
+          break
+        else
+          for file in $(git diff --name-only $lastcommit HEAD); do
+            if [[ $file == $app/* ]]; then
+              echo  "Updating chart version for $app in $app/Chart.yaml"
+              CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+              sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+              echo "version_change=true" >> $GITHUB_ENV
+              break
+            fi
+          done
+        fi
+        done
+
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
@@ -73,29 +97,6 @@ jobs:
       uses: azure/setup-helm@v3
       with:
         version: v3.9.2
-
-    - name: Update Chart version of modified charts
-      if: env.chart_needed == 'true'
-      run: |
-
-        ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
-        for app in ./charts/*; do
-        if [[ $no_commit == "true" ]]; then
-          echo "No commit history; updating chart version in $app/Chart.yaml."
-          CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-          sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
-          break
-        else
-          for file in $(git diff --name-only $lastcommit HEAD); do
-            if [[ $file == $app/* ]]; then
-              echo  "Updating chart version for $app in $app/Chart.yaml"
-              CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-              sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
-              break
-            fi
-          done
-        fi
-        done
 
     - name: Add latest commit SHA and commit changes
       id: commit
