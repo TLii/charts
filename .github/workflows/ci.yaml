@@ -62,7 +62,6 @@ jobs:
 
     - name: Update Chart version of modified charts
       run: |
-
         ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
         for app in ./charts/*; do
         if [[ $no_commit == "true" ]]; then
@@ -70,6 +69,7 @@ jobs:
           CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
           sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
           echo "version_change=true" >> $GITHUB_ENV
+          echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml"
           break
         else
           for file in $(git diff --name-only $lastcommit HEAD); do
@@ -78,6 +78,7 @@ jobs:
               CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
               sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
               echo "version_change=true" >> $GITHUB_ENV
+              echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml"
               break
             fi
           done
@@ -98,7 +99,7 @@ jobs:
       with:
         version: v3.9.2
 
-    - name: Add latest commit SHA and commit changes
+    - name: Add current commit SHA to file and commit all changes
       id: commit
       if: env.version_change == 'true'
       run: |
@@ -106,7 +107,7 @@ jobs:
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
         git commit -m "Updating appVersion(s)" -a
-        echo "Committing upstream changes"
+        echo "Committing changes to repository"
         echo "push=true" >> $GITHUB_ENV
 
       shell: bash
