@@ -69,7 +69,7 @@ jobs:
           CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
           sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
           echo "version_change=true" >> $GITHUB_ENV
-          echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml"
+          echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml)"
           break
         else
           for file in $(git diff --name-only $lastcommit HEAD); do
@@ -78,7 +78,7 @@ jobs:
               CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
               sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
               echo "version_change=true" >> $GITHUB_ENV
-              echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml"
+              echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml)"
               break
             fi
           done
