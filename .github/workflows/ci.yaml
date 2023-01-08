@@ -45,14 +45,14 @@ jobs:
         echo "Checking OpenHAB upstream..."
         OPENHAB_HEAD=$(git ls-remote https://github.com/openhab/openhab-docker refs/heads/main | head -n1 |awk '{print $1;}')
         OPENHAB_APPVERSION=$(git ls-remote --refs --tags "https://github.com/openhab/openhab.git" | grep -E '.+/tags/[0-9]+\.[0-9]+\.[0-9]+(\.(M|RC)[0-9]+)?$' | sed -E 's#.+/tags/(.+)#\1#g' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | tail -n 1)
-        echo OpenHAB head commit is $OPENHAB_HEAD.
+        echo "OpenHAB head commit is $OPENHAB_HEAD."
         if [[ -z $(cat ./.github/openhab_version) ||  $OPENHAB_APPVERSION != $(cat ./.github/openhab_version) ]]; then
           echo "OpenHAB version has changed, previous version was $(cat ./.github/openhab_version)"
           echo "openhab_changed=true" >> $GITHUB_ENV
           echo "version_change=true" >> $GITHUB_ENV
           sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
           echo "$OPENHAB_APPVERSION" > ./.github/openhab_version;
-        if [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
+        elif [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
           echo "OpenHAB version has not changed, but head commit has. Previous head was $(cat ./.github/openhab_head)"
           echo "openhab_changed=true" >> $GITHUB_ENV
           echo "version_change=true" >> $GITHUB_ENV
