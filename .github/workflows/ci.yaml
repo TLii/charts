@@ -21,8 +21,9 @@ jobs:
         fetch-depth: 0
 
     - name: Check image upstreams for changes and update appVersion as needed
-      id: version
       run: |
+        echo "version_change=false" >> $GITHUB_ENV
+
         echo "Checking DeCONZ upstream..."
         DECONZ_HEAD=$(git ls-remote https://github.com/deconz-community/deconz-docker refs/heads/main | head -n1 |awk '{print $1;}')
         DECONZ_APPVERSION=$(curl -s https://raw.githubusercontent.com/deconz-community/deconz-docker/main/version.json | grep 'version' | head -n1 | awk '{print $2;}' | sed 's/[",]//g')
@@ -91,13 +92,12 @@ jobs:
         done
 
     - name: Add current commit SHA to file and commit all changes
-      id: commit
       if: env.version_change == 'true'
       run: |
         echo "$GITHUB_SHA" > .github/latest_running_sha
         git config --local user.email "github-actions@github.com"
         git config --local user.name "github-actions"
-        git commit -m "Updating appVersion(s)" -a
+        git commit -m "Automatic version update" -a
         echo "Committing changes to repository"
         echo "push=true" >> $GITHUB_ENV
 
@@ -125,6 +125,7 @@ jobs:
 
     - name: Setup environment
       run: |
+        echo "chart_needed=false" >> $GITHUB_ENV
         echo "version_change=${{ needs.versionUpdater.outputs.version_change }}" >> $GITHUB_ENV
 
     - name: Evaluate if chart should be released
@@ -165,7 +166,7 @@ jobs:
 
     - name: Create kind cluster
       uses: helm/kind-action@v1.2.0
-      if: env.list-changed == 'true'
+      if: env.list_changed == 'true'
 
     - name: Run chart-testing (install)
       if: env.chart_needed == 'true'
