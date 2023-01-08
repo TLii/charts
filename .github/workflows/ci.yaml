@@ -32,6 +32,7 @@ jobs:
           echo "version_change=true" >> $GITHUB_ENV
           sed -i "s/^appVersion:.*/appVersion: $DECONZ_APPVERSION/" ./charts/deconz/Chart.yaml
           echo "$DECONZ_APPVERSION" > ./.github/deconz_version;
+          echo "$DECONZ_HEAD" > ./.github/deconz_head;
         elif [[ -z $(cat ./.github/deconz_head) || $DECONZ_HEAD != "$(cat ./.github/deconz_head)" ]]; then
           echo "DeCONZ version has not changed, but head commit has. Previous head was $(cat ./github/deconz_head)"
           echo "version_change=true" >> $GITHUB_ENV
@@ -52,6 +53,7 @@ jobs:
           echo "version_change=true" >> $GITHUB_ENV
           sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
           echo "$OPENHAB_APPVERSION" > ./.github/openhab_version;
+          echo "$OPENHAB_HEAD" > ./.github/openhab_head;
         elif [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
           echo "OpenHAB version has not changed, but head commit has. Previous head was $(cat ./.github/openhab_head)"
           echo "openhab_changed=true" >> $GITHUB_ENV
@@ -88,6 +90,25 @@ jobs:
         fi
         done
 
+    - name: Add current commit SHA to file and commit all changes
+      id: commit
+      if: env.version_change == 'true'
+      run: |
+        echo "$GITHUB_SHA" > .github/latest_running_sha
+        git config --local user.email "github-actions@github.com"
+        git config --local user.name "github-actions"
+        git commit -m "Updating appVersion(s)" -a
+        echo "Committing changes to repository"
+        echo "push=true" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Push new versions
+      if: env.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
@@ -101,19 +122,6 @@ jobs:
       uses: azure/setup-helm@v3
       with:
         version: v3.9.2
-
-    - name: Add current commit SHA to file and commit all changes
-      id: commit
-      if: env.version_change == 'true'
-      run: |
-        echo "$GITHUB_SHA" > .github/latest_running_sha
-        git config --local user.email "github-actions@github.com"
-        git config --local user.name "github-actions"
-        git commit -m "Updating appVersion(s)" -a
-        echo "Committing changes to repository"
-        echo "push=true" >> $GITHUB_ENV
-
-      shell: bash
 
     - uses: actions/setup-python@v4
       if: env.chart_needed == 'true'
@@ -144,12 +152,6 @@ jobs:
     - name: Run chart-testing (install)
       if: env.chart_needed == 'true'
       run: ct install
-
-    - name: Push changes once tests have succeeded
-      if: env.push == 'true'
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run chart-releaser
       if: env.chart_needed == 'true'
