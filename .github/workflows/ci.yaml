@@ -11,7 +11,7 @@ on:
 
 
 jobs:
-  build:
+  versionUpdater:
     runs-on: ubuntu-latest
 
     steps:
@@ -109,6 +109,24 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
+    outputs:
+      version_change: ${{ env.version_change }}
+
+  chartTester:
+    runs-on: ubuntu-latest
+
+    needs: versionUpdater
+    steps:
+
+    - name: Check out
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup environment
+      run: |
+        echo "version_change=${{ needs.versionUpdater.outputs.version_change }}" >> $GITHUB_ENV
+
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
@@ -152,6 +170,23 @@ jobs:
     - name: Run chart-testing (install)
       if: env.chart_needed == 'true'
       run: ct install
+
+    outputs:
+      chart_needed: ${{ env.chart_needed }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: chartTester
+    steps:
+
+    - name: Check out
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Setup environment
+      run: |
+        echo "chart_needed=${{ needs.chartTester.outputs.chart_needed }}" >> $GITHUB_ENV
 
     - name: Run chart-releaser
       if: env.chart_needed == 'true'
