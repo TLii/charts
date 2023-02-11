@@ -113,7 +113,7 @@ jobs:
               # If file is in app directory and it's not just Chart.yaml, mark the chart as changed
               # Note: We miss changes to description and chart name, but avoid endless version bumps.
 
-              if [[ $file == $app/* ]] && [[ $file != $app/Chart.yaml ]] then
+              if [[ $file == $app/* ]] && [[ $file != $app/Chart.yaml ]]; then
 
                 echo  "Chart has been changed; updating chart version for $app in $app/Chart.yaml"
                 app_changed=true
