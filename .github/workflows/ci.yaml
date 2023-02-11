@@ -20,13 +20,20 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Check image upstreams for changes and update appVersion as needed
+    # Check if upstream application has changed and if has, update appVersion and/or Chart version, triggering new chart build.
+    - name: Check image repositories for changes and update appVersion as needed
       run: |
+        # Monitor if chart version needs to change
         echo "version_change=false" >> $GITHUB_ENV
 
+        # DeCONZ, check both application version and Git head
         echo "Checking DeCONZ upstream..."
         DECONZ_HEAD=$(git ls-remote https://github.com/deconz-community/deconz-docker refs/heads/main | head -n1 |awk '{print $1;}')
+
+        # Get current application version from file
         DECONZ_APPVERSION=$(curl -s https://raw.githubusercontent.com/deconz-community/deconz-docker/main/version.json | grep 'version' | head -n1 | awk '{print $2;}' | sed 's/[",]//g')
+
+        # Check if version has changed and if so, update head and version
         if [[ -z $(cat ./.github/deconz_version) ||  $DECONZ_APPVERSION != $(cat ./.github/deconz_version) ]]; then
           echo "DeCONZ version has changed, previous version was $(cat ./.github/deconz_version)"
           echo "deconz_changed=true" >> $GITHUB_ENV
@@ -34,20 +41,28 @@ jobs:
           sed -i "s/^appVersion:.*/appVersion: $DECONZ_APPVERSION/" ./charts/deconz/Chart.yaml
           echo "$DECONZ_APPVERSION" > ./.github/deconz_version;
           echo "$DECONZ_HEAD" > ./.github/deconz_head;
+
+        # Check if only head commit has changed, and if so, update only head
         elif [[ -z $(cat ./.github/deconz_head) || $DECONZ_HEAD != "$(cat ./.github/deconz_head)" ]]; then
-          echo "DeCONZ version has not changed, but head commit has. Previous head was $(cat ./github/deconz_head)"
+          echo "DeCONZ version has not changed, but head commit has. Previous head was $(cat ./github/deconz_head), new one is $DECONZ_HEAD"
           echo "version_change=true" >> $GITHUB_ENV
           echo "deconz_changed=true" >> $GITHUB_ENV
           echo "$DECONZ_HEAD" > ./.github/deconz_head;
+
+          # If neither have changed, do nothing.
         else
           echo "deconz_changed=false" >> $GITHUB_ENV;
           echo "DeCONZ has not changed, still at version $(cat ./.github/deconz_version) and head $(cat ./github/deconz_head)"
         fi
 
+        # OpenHAB, check both head and application version
         echo "Checking OpenHAB upstream..."
         OPENHAB_HEAD=$(git ls-remote https://github.com/openhab/openhab-docker refs/heads/main | head -n1 |awk '{print $1;}')
-        OPENHAB_APPVERSION=$(git ls-remote --refs --tags "https://github.com/openhab/openhab.git" | grep -E '.+/tags/[0-9]+\.[0-9]+\.[0-9]+(\.(M|RC)[0-9]+)?$' | sed -E 's#.+/tags/(.+)#\1#g' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | tail -n 1)
-        echo "OpenHAB head commit is $OPENHAB_HEAD."
+
+        # Get current application version from openhab-distro the same way as https://github.com/openhab/openhab-docker does
+        OPENHAB_APPVERSION=$(ggit ls-remote --refs --tags "https://github.com/openhab/openhab-distro.git" | grep -E '.+/tags/[0-9]+\.[0-9]+\.[0-9]+(\.(M|RC)[0-9]+)?$' | sed -E 's#.+/tags/(.+)#\1#g' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | tail -n 1)
+
+        # Check if application version has changed and if so, update both appversion and head
         if [[ -z $(cat ./.github/openhab_version) ||  $OPENHAB_APPVERSION != $(cat ./.github/openhab_version) ]]; then
           echo "OpenHAB version has changed, previous version was $(cat ./.github/openhab_version)"
           echo "openhab_changed=true" >> $GITHUB_ENV
@@ -55,42 +70,73 @@ jobs:
           sed -i "s/^appVersion:.*/appVersion: $OPENHAB_APPVERSION/" ./charts/openhab/Chart.yaml
           echo "$OPENHAB_APPVERSION" > ./.github/openhab_version;
           echo "$OPENHAB_HEAD" > ./.github/openhab_head;
+
+        # Check if only head has changed and if so, update it
         elif [[ -z $(cat ./.github/openhab_head) || $OPENHAB_HEAD != "$(cat ./.github/openhab_head)" ]]; then
           echo "OpenHAB version has not changed, but head commit has. Previous head was $(cat ./.github/openhab_head)"
           echo "openhab_changed=true" >> $GITHUB_ENV
           echo "version_change=true" >> $GITHUB_ENV
           echo "$OPENHAB_HEAD" > ./.github/openhab_head;
+
+        # If neither have changed, do nothing.
         else
           echo "openhab_changed=false" >> $GITHUB_ENV;
           echo "OpenHAB has not changed, still at $(cat ./.github/openhab_head)"
         fi
 
-    - name: Update Chart version of modified charts
+    - name: Check charts for changes.
       run: |
-        ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
+        # Make sure to include all changes since last commit by keeping record of last run's commit SHA.
+
+        # Check the last run's SHA
+        ([[ -f .github/latest_running_sha ]] && lastcommit=$(cat .github/latest_running_sha) && echo "Latest commit to chart repository was $lastcommit") || (no_commit="true" && echo "No previous commit; bumping versions")
+
+        # Run version update to each chart as necessary by looping through charts.
         for app in ./charts/*; do
+          app_changed=false
+
+          # Get current loop's app name
           appname=$(echo $app | cut -d'/' -f 3)
+
+          # If there is no commit history, bump version just to be on the safe side.
           if [[ $no_commit == "true" ]]; then
-            echo "No commit history; updating chart version in $app/Chart.yaml."
-            CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-            sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
-            echo "version_change=true" >> $GITHUB_ENV
-            echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml)"
+            echo "No commit history for CI; updating chart version for $appname in $app/Chart.yaml."
+            app_changed=true
             break
+
+          # If there is commit history, check if chart has been changed, and update chart version as needed.
           else
+
+            # Run through each changed file to see if they are located within this loop's chart
             for file in $(git diff --name-only $lastcommit HEAD); do
-              if [[ $file == $app/* ]]; then
-                echo  "Updating chart version for $app in $app/Chart.yaml"
-                CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-                sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
-                echo "version_change=true" >> $GITHUB_ENV
-                echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml)"
+
+              # If file is in app directory and it's not just Chart.yaml, mark the chart as changed
+              # Note: We miss changes to description and chart name, but avoid endless version bumps.
+
+              if [[ $file == $app/* ]] && [[ $file != $app/Chart.yaml ]] then
+
+                echo  "Chart has been changed; updating chart version for $app in $app/Chart.yaml"
+                app_changed=true
+
+                # No need to continue looping files for this app, so break
                 break
               fi
             done
+
           fi
+
+          # If app was marked as changed, bump the version.
+          if [[ $app_changed == true ]]; then
+            CHARTVER=$(sed -n  '/^version:.*/p' $app/Chart.yaml | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+            sed -i "s/^version:.*/$CHARTVER/" $app/Chart.yaml
+            echo "Current version of $app: $(sed -n  '/^version:.*/p' $app/Chart.yaml)"
+            echo "version_change=true" >> $GITHUB_ENV
+          fi
+
+          # End loop for this app.
         done
 
+    # If any version change has been observed, record current head SHA and commit version changes.
     - name: Add current commit SHA to file and commit all changes
       if: env.version_change == 'true'
       run: |
@@ -103,7 +149,7 @@ jobs:
 
       shell: bash
 
-    - name: Push new versions
+    - name: Push new versions if observerd
       if: env.push == 'true'
       uses: ad-m/github-push-action@master
       with:
@@ -114,11 +160,13 @@ jobs:
     #   with:
     #     fetch-depth: 0
 
+    # Begin chart creation
     - name: Setup environment
       run: |
         echo "chart_needed=false" >> $GITHUB_ENV
         echo "version_change=${{ env.version_change }}" >> $GITHUB_ENV
 
+    # Chart should be released every time a version change is observed or, obviously, when a push event occurs.
     - name: Evaluate if chart should be released
       if: |
         env.version_change == 'true' ||
@@ -162,10 +210,6 @@ jobs:
     - name: Run chart-testing (install)
       if: env.chart_needed == 'true'
       run: ct install
-
-    - name: Setup environment
-      run: |
-        echo "chart_needed=${{ env.chart_needed }}" >> $GITHUB_ENV
 
     - name: Run chart-releaser
       if: env.chart_needed == 'true'
