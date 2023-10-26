@@ -149,12 +149,6 @@ jobs:
 
       shell: bash
 
-    - name: Push new versions if observerd
-      if: env.push == 'true'
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
     # - name: Check out
     #   uses: actions/checkout@v3
     #   with:
@@ -216,3 +210,9 @@ jobs:
       uses: helm/chart-releaser-action@v1.4.1
       env:
         CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        
+    - name: Push new versions, if all went well.
+      if: env.push == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
